@@ -45,11 +45,24 @@ public class Server {
             guard let client = client else { continue }
             log.debugMessage("Client connected: \(client.address)")
             background {
-                self.handleClient(Connection(client))
+                let connection = Connection(client)
+                self.handshake(connection: connection)
+                self.handleClient(connection)
                 // TODO: Report that the client has been closed?
-                try? client.close()
+                connection.disconnect()
             }
         }
+    }
+
+    private func handshake(connection: Connection) {
+        let client = connection.client
+        let iac: Byte = 255
+        let will: Byte = 253
+        let tt: Byte = 24
+        let bytes = Bytes(arrayLiteral: iac, will, tt)
+        let _ = try? client.write(bytes)        
+        let response = try? client.readAll()
+        print("response: \(String(describing: response))")
     }
 
 }
@@ -62,7 +75,7 @@ public protocol Client {
 }
 
 class Connection: Client, Hashable, Equatable {
-    private let client: TCPInternetSocket
+    fileprivate let client: TCPInternetSocket
     public var connected = true
 
     init(_ client: TCPInternetSocket) {
