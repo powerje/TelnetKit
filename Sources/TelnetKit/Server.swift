@@ -62,7 +62,7 @@ public class Server {
         let bytes = Bytes(arrayLiteral: iac, will, tt)
         let _ = try? client.write(bytes)        
         let response = try? client.readAll()
-        print("response: \(String(describing: response))")
+        print("response: \(response?.telnetCommandList() ?? "no response")")
     }
 
 }

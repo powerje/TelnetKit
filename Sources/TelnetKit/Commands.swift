@@ -99,3 +99,39 @@ enum Options: Byte {
     case exopl = 255            // http://tools.ietf.org/html/rfc861
 }
 
+// TODO: implement this harder.
+// Uh, not really sure is this stuff is valid or useful at this point - I just wanted to:
+// a) determine whether or not a client response ought to be interpreted as user input vs
+//    client communication, and
+// b) have a way to produce human readable strings from Bytes to more easily follow the
+//    negotiations.
+// Mainly reading: http://www.pcmicro.com/netfoss/telnet.html to see if this makes sense.
+extension Array where Element == Byte {
+
+    func isTelnetCommand() -> Bool {
+        if self.count < 2 { return false }
+
+        let first = self[0]
+        let second = self[1]
+        return first == Commands.iac.rawValue && second != Commands.iac.rawValue
+    }
+
+    func telnetCommandList() -> String {
+        var output = ""
+        for byte in self {
+            // Can not quite be correct because there are overlaps between commands + option values
+            // and this can not support extended options.
+            if let value = Commands(rawValue: byte) {
+                output.append("\(value) ")
+                continue
+            }
+            if let value = Options(rawValue: byte) {
+                output.append("\(value) ")
+                continue
+            }
+            output.append("UNKNOWN ")
+        }
+        return output
+    }
+}
+
