@@ -1,12 +1,21 @@
-//
-//  Commands.swift
-//  TelnetKit
-//
-//  Created by James Power on 12/24/17.
-//
+////
+////  Commands.swift
+////  TelnetKit
+////
+////  Created by James Power on 12/24/17.
+
 
 import Foundation
-import Sockets
+import TCP
+
+
+// WTF these are in the TCP framework:
+public typealias Byte = UInt8
+public typealias Bytes = [Byte]
+public typealias ByteBuffer = UnsafeBufferPointer<Byte>
+public typealias MutableByteBuffer = UnsafeMutableBufferPointer<Byte>
+public typealias BytesPointer = UnsafePointer<Byte>
+public typealias MutableBytesPointer = UnsafeMutablePointer<Byte>
 
 // Copied most of these from:
 // https://github.com/TooTallNate/node-telnet/blob/master/lib/telnet.js
@@ -107,7 +116,6 @@ enum Options: Byte {
 //    negotiations.
 // Mainly reading: http://www.pcmicro.com/netfoss/telnet.html to see if this makes sense.
 extension Array where Element == Byte {
-
     func isTelnetCommand() -> Bool {
         if self.count < 2 { return false }
 
@@ -134,4 +142,3 @@ extension Array where Element == Byte {
         return output
     }
 }
-

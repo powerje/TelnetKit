@@ -1,57 +1,50 @@
-import Sockets
+import Async
+import Bits
+import Dispatch
+import Foundation
+import TCP
 import Willow
 
 let log = Logger(logLevels: [.all], writers: [ConsoleWriter()])
-public typealias HandleClient = (_ client: Client) -> ()
+public typealias HandleClient = (_ client: Client) -> Void
 
 public class Server {
-    let port: Int
-    private let handleClient: HandleClient
-    private var serverSocket: TCPInternetSocket?
+    fileprivate static let readMax = 4096
 
-    public init(port: Int = 9000, handleClient: @escaping HandleClient) {
+    let port: UInt16
+    private let handleClient: HandleClient
+    private var serverSocket: TCPSocket?
+
+    public init(port: UInt16 = 9000, handleClient: @escaping HandleClient) {
         self.port = port
         self.handleClient = handleClient
     }
 
     public func serve() {
-        guard let serverSocket = socket() else { fatalError("Unable to start server on port \(port)") }
-        self.serverSocket = serverSocket
-        listen()
+        print("Listening on port \(port)")
+        do {
+            // TODO: should this default to non blocking? It almost certainly should be an option.
+            serverSocket = try TCPSocket(isNonBlocking: false)
+            var server = try TCPServer(socket: serverSocket!)
+            try server.start(port: port)
+            while let client = try? server.accept() {
+                guard let client = client else { continue }
+                DispatchQueue.global(qos: .background).async {
+                    let connection = Connection(client)
+                    log.debugMessage("Client connected: \(connection.ip())")
+                    self.handshake(connection: connection)
+                    self.handleClient(connection)
+                    connection.disconnect()
+                }
+            }
+        } catch {
+            fatalError("Server Error: \(error.localizedDescription)")
+        }
     }
 
     public func stop() {
         guard let serverSocket = self.serverSocket else { return }
-        try! serverSocket.close()
-    }
-
-    private func socket() -> TCPInternetSocket? {
-        log.debugMessage("Creating socket on port \(self.port)")
-
-        guard let serverSocket = try? TCPInternetSocket(scheme: "telnet", hostname: "0.0.0.0", port: UInt16(port)) else {
-            log.debugMessage("Failed to start server!")
-            return nil
-        }
-
-        try! serverSocket.bind()
-        try! serverSocket.listen(max: 4096)
-        log.debugMessage("Listening on port \(self.port)")
-
-        return serverSocket
-    }
-
-    private func listen() {
-        while let client = try? serverSocket?.accept() {
-            guard let client = client else { continue }
-            log.debugMessage("Client connected: \(client.address)")
-            background {
-                let connection = Connection(client)
-                self.handshake(connection: connection)
-                self.handleClient(connection)
-                // TODO: Report that the client has been closed?
-                connection.disconnect()
-            }
-        }
+        serverSocket.close()
     }
 
     private func handshake(connection: Connection) {
@@ -60,11 +53,10 @@ public class Server {
         let will: Byte = 253
         let tt: Byte = 24
         let bytes = Bytes(arrayLiteral: iac, will, tt)
-        let _ = try? client.write(bytes)        
-        let response = try? client.readAll()
+        _ = try? client.socket.write(Data(bytes: bytes)) // [Byte] needs to be Data now
+        let response = try? [UInt8](client.socket.read(max: Server.readMax))
         print("response: \(response?.telnetCommandList() ?? "no response")")
     }
-
 }
 
 public protocol Client {
@@ -72,22 +64,24 @@ public protocol Client {
     @discardableResult func write(string: String) -> Bool
     var connected: Bool { get }
     func disconnect()
+    func domain() -> String
+    func ip() -> String
 }
 
 class Connection: Client, Hashable, Equatable {
-    fileprivate let client: TCPInternetSocket
+    fileprivate let client: TCPClient
     public var connected = true
 
-    init(_ client: TCPInternetSocket) {
+    init(_ client: TCPClient) {
         self.client = client
-
     }
 
     func read() -> String? {
-        guard let message = try? client.read(max: 2048).makeString() else {
-            log.debugMessage("Client is disconnected, report up somehow?")
-            disconnect()
-            return nil
+        guard let data = try? client.socket.read(max: Server.readMax),
+            let message = String(data: data, encoding: .utf8) else {
+                log.debugMessage("Client is disconnected, report up somehow?")
+                disconnect()
+                return nil
         }
 
         guard message != "" else {
@@ -100,23 +94,62 @@ class Connection: Client, Hashable, Equatable {
     }
 
     @discardableResult func write(string: String) -> Bool {
-        if let _ = try? client.write(string) { return true }
-        return false
+        guard let toWrite = string.data(using: .utf8) else { return false }
+        let result = try? client.socket.write(toWrite)
+        return result != nil
     }
 
     func disconnect() {
-        // Report up that client has closed?
-        try? client.close()
+        // TODO: Report up that client has closed?
+        client.close()
         connected = false
     }
 
-    public var hashValue: Int {
-        return String(describing: client.address).hashValue
+    func domain() -> String {
+        guard let ip = client.socket.address?.remoteAddress else { return "not connected" }
+        return Connection.reverseDNS(ip: ip)
     }
 
-    public static func ==(lhs: Connection, rhs: Connection) -> Bool {
-        return String(describing: lhs.client.address) == String(describing: rhs.client.address)
+    func ip() -> String {
+        return client.socket.address?.remoteAddress ?? "not connected"
+    }
+
+    public var hashValue: Int {
+        return String(describing: client.socket.address).hashValue
+    }
+
+    public static func == (lhs: Connection, rhs: Connection) -> Bool {
+        return String(describing: lhs.client.socket.address) == String(describing: rhs.client.socket.address)
+    }
+
+    private static func reverseDNS(ip: String) -> String {
+        var results: UnsafeMutablePointer<addrinfo>? = nil
+        defer {
+            results?.deallocate()
+        }
+        let error = getaddrinfo(ip, nil, nil, &results)
+        if (error != 0) {
+            log.debugMessage("Unable to reverse ip: \(ip)")
+            return ip
+        }
+
+        for addrinfo in sequence(first: results, next: { $0?.pointee.ai_next }) {
+            guard let pointee = addrinfo?.pointee else {
+                log.debugMessage("Unable to reverse ip: \(ip)")
+                return ip
+            }
+
+            let hname = UnsafeMutablePointer<Int8>.allocate(capacity: Int(NI_MAXHOST))
+            defer {
+                hname.deallocate()
+            }
+            let error = getnameinfo(pointee.ai_addr, pointee.ai_addrlen, hname, socklen_t(NI_MAXHOST), nil, 0, 0)
+            if (error != 0) {
+                continue
+            }
+            return String(cString: hname)
+        }
+
+        return ip
     }
 }
-
-

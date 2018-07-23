@@ -2,12 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "Bits",
-        "repositoryURL": "https://github.com/vapor/bits.git",
+        "package": "Async",
+        "repositoryURL": "https://github.com/vapor/async.git",
         "state": {
           "branch": null,
-          "revision": "c32f5e6ae2007dccd21a92b7e33eba842dd80d2f",
-          "version": "1.1.0"
+          "revision": "7de2a117199c85100d21121c273de1ad76fa7bad",
+          "version": "1.0.0-beta.1"
         }
       },
       {
@@ -15,26 +15,17 @@
         "repositoryURL": "https://github.com/vapor/core.git",
         "state": {
           "branch": null,
-          "revision": "f9f3a585ab0ea5764b46d7a36d9c0d9d508b9c63",
-          "version": "2.2.0"
-        }
-      },
-      {
-        "package": "Debugging",
-        "repositoryURL": "https://github.com/vapor/debugging.git",
-        "state": {
-          "branch": null,
-          "revision": "fc5a27d6eb236141dc24e5f14eedaa2e035ae7b3",
-          "version": "1.1.1"
+          "revision": "caad4095e5a86aabfc6cc774dc384f56b972c110",
+          "version": "3.0.0-beta.1"
         }
       },
       {
         "package": "Sockets",
-        "repositoryURL": "https://github.com/vapor/sockets",
+        "repositoryURL": "https://github.com/vapor/sockets.git",
         "state": {
-          "branch": null,
-          "revision": "70d14c0e223257176f5ef69a595f7cad5de7a88b",
-          "version": "2.2.1"
+          "branch": "3.0.0-beta.2",
+          "revision": "f93514d40db9172276f5ac176464e39774112042",
+          "version": null
         }
       },
       {
@@ -42,8 +33,8 @@
         "repositoryURL": "https://github.com/Nike-Inc/Willow.git",
         "state": {
           "branch": null,
-          "revision": "d18a46331eb33acbf9c0f0a1b5060d3ec92043df",
-          "version": "5.0.0"
+          "revision": "bee75d06f0e94a7053a790f0327220d53f075758",
+          "version": "5.0.2"
         }
       }
     ]
