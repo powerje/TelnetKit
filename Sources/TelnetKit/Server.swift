@@ -2,7 +2,7 @@ import Sockets
 import Willow
 
 let log = Logger(logLevels: [.all], writers: [ConsoleWriter()])
-public typealias HandleClient = (_ client: Client) -> ()
+public typealias HandleClient = (_ client: Client) -> Void
 
 public class Server {
     let port: Int
@@ -15,7 +15,7 @@ public class Server {
     }
 
     public func serve() {
-        guard let serverSocket = socket() else { fatalError("Unable to start server on port \(port)") }
+        guard let serverSocket = socket() else { fatalError("Unable to start server on port \(self.port)") }
         self.serverSocket = serverSocket
         listen()
     }
@@ -60,11 +60,10 @@ public class Server {
         let will: Byte = 253
         let tt: Byte = 24
         let bytes = Bytes(arrayLiteral: iac, will, tt)
-        let _ = try? client.write(bytes)        
+        _ = try? client.write(bytes)
         let response = try? client.readAll()
         print("response: \(response?.telnetCommandList() ?? "no response")")
     }
-
 }
 
 public protocol Client {
@@ -80,7 +79,6 @@ class Connection: Client, Hashable, Equatable {
 
     init(_ client: TCPInternetSocket) {
         self.client = client
-
     }
 
     func read() -> String? {
@@ -114,9 +112,7 @@ class Connection: Client, Hashable, Equatable {
         return String(describing: client.address).hashValue
     }
 
-    public static func ==(lhs: Connection, rhs: Connection) -> Bool {
+    public static func == (lhs: Connection, rhs: Connection) -> Bool {
         return String(describing: lhs.client.address) == String(describing: rhs.client.address)
     }
 }
-
-
