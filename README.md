@@ -13,6 +13,11 @@ Almost nothing! Connections can be made and are a thin layer over [Vapor Sockets
   - [ ] Negotiate basic options
 	  - [ ] [Terminal Type](https://tools.ietf.org/html/rfc1091)
   - [ ] Symmetric view of terminals and processes
+
 ## Building
 Build using the Swift Package Manager:
 `swift build`
+
+To generate the xcodeproj:
+`swift package generate-xcodeproj`
+
