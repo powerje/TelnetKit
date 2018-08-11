@@ -38,7 +38,11 @@ public class Server {
                 }
             }
         } catch {
-            fatalError("Server Error: \(error.localizedDescription)")
+            if let tcpError = error as? TCPError {
+                fatalError("TCPError: \(tcpError.reason)")
+            } else {
+                fatalError("Server Error: \(error.localizedDescription)")
+            }
         }
     }
 
