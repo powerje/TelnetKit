@@ -129,7 +129,9 @@ class Connection: Client, Hashable, Equatable {
     private static func reverseDNS(ip: String) -> String {
         var results: UnsafeMutablePointer<addrinfo>? = nil
         defer {
-            results?.deallocate()
+            if let results = results {
+                freeaddrinfo(results)
+            }
         }
         let error = getaddrinfo(ip, nil, nil, &results)
         if (error != 0) {
