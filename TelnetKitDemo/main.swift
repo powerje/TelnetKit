@@ -19,7 +19,12 @@ func main() {
 private func beginEcho(client: Client) {
     while client.connected {
         if let input = client.read() {
-            client.write(string: input)
+            if input.trimmingCharacters(in: .whitespacesAndNewlines) == "quit" {
+                client.write(string: "buh bye!\n")
+                client.disconnect()
+            } else {
+                client.write(string: input)
+            }
         }
     }
 }
