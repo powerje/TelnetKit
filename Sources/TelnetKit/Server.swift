@@ -1,51 +1,53 @@
 import Dispatch
 import Foundation
+import Socket
 import Willow
 
 let log = Logger(logLevels: [.all], writers: [ConsoleWriter()])
 public typealias HandleClient = (_ client: Client) -> Void
 
 public class Server {
-    fileprivate static let readMax = 4096
 
-    let port: UInt16
+    let port: Int
     private let handleClient: HandleClient
+    private var listenSocket: Socket?
+    private let socketLockQueue = DispatchQueue(label: "com.telnetkit.Server.SocketLockQueue")
+
 //    private var serverSocket: TCPSocket?
 
-    public init(port: UInt16 = 9000, handleClient: @escaping HandleClient) {
+    public init(port: Int = 9000, handleClient: @escaping HandleClient) {
         self.port = port
         self.handleClient = handleClient
     }
 
     public func serve() {
         print("Listening on port \(port)")
-//        do {
-//            // TODO: should this default to non blocking? It almost certainly should be an option.
-//            serverSocket = try TCPSocket(isNonBlocking: false)
-//            var server = try TCPServer(socket: serverSocket!)
-//            try server.start(port: port)
-//            while let client = try? server.accept() {
-//                guard let client = client else { continue }
-//                DispatchQueue.global(qos: .background).async {
-//                    let connection = Connection(client)
-//                    log.debugMessage("Client connected: \(connection.ip())")
-//                    self.handshake(connection: connection)
-//                    self.handleClient(connection)
-//                    connection.disconnect()
-//                }
-//            }
-//        } catch {
-//            if let tcpError = error as? TCPError {
-//                fatalError("TCPError: \(tcpError.reason)")
-//            } else {
-//                fatalError("Server Error: \(error.localizedDescription)")
-//            }
-//        }
+        do {
+            try self.listenSocket = Socket.create(family: .inet6)
+            guard let server = self.listenSocket else {
+                print("Unable to unwrap socket...")
+                return
+            }
+            try server.listen(on: self.port)
+            while let client = try? server.acceptClientConnection() {
+                DispatchQueue.global(qos: .background).async {
+                    let connection = Connection(client)
+                    log.debugMessage("Client connected: \(connection.domain())")
+                    self.handshake(connection: connection)
+                    self.handleClient(connection)
+                    connection.disconnect()
+                }
+            }
+
+        } catch {
+            print("Error: \(error)")
+        }
+
     }
 
     public func stop() {
-//        guard let serverSocket = self.serverSocket else { return }
-//        serverSocket.close()
+        guard let listenSocket = self.listenSocket else { return }
+        listenSocket.close()
     }
 
     private func handshake(connection: Connection) {
@@ -69,98 +71,76 @@ public protocol Client {
     func ip() -> String
 }
 
-class Connection: Client, Hashable, Equatable {
-//    fileprivate let client: TCPClient
+class Connection: Client {
+    fileprivate let client: Socket
     public var connected = true
 
-//    init(_ client: TCPClient) {
-//        self.client = client
-//    }
+    init(_ client: Socket) {
+        self.client = client
+    }
 
     func read() -> String? {
-        return nil
-//        guard let data = try? client.socket.read(max: Server.readMax),
-//            let message = String(data: data, encoding: .utf8) else {
-//                log.debugMessage("Client is disconnected, report up somehow?")
-//                disconnect()
-//                return nil
-//        }
-//
-//        guard message != "" else {
-//            log.debugMessage("Client is disconnected, report up somehow?")
-//            disconnect()
-//            return nil
-//        }
-//
-//        return message
+        guard let message = try? client.readString() else {
+            log.debugMessage("Client is disconnected, report up somehow?")
+            disconnect()
+            return nil
+        }
+
+        return message
     }
 
     @discardableResult func write(string: String) -> Bool {
-        return false
-//        guard let toWrite = string.data(using: .utf8) else { return false }
-//        let result = try? client.socket.write(toWrite)
-//        return result != nil
+        let result = try? client.write(from: string)
+        return result != nil
     }
 
     func disconnect() {
         // TODO: Report up that client has closed?
-//        client.close()
-//        connected = false
+        client.close()
+        connected = false
     }
 
     func domain() -> String {
-//        guard let ip = client.socket.address?.remoteAddress else { return "not connected" }
+        return client.remoteHostname
+//        guard let ip = client.remoteAddress else { return "not connected" }
 //        return Connection.reverseDNS(ip: ip)
-        return ""
     }
 
     func ip() -> String {
-        return ""
-//        return client.socket.address?.remoteAddress ?? "not connected"
+        return client.remotePath ?? "not connected"
     }
 
-    public var hashValue: Int {
-//        return String(describing: client.socket.address).hashValue
-        return 0
-    }
-
-    public static func == (lhs: Connection, rhs: Connection) -> Bool {
-//        return String(describing: lhs.client.socket.address) == String(describing: rhs.client.socket.address)
-        return false
-    }
-
+    // TODO: maybe remove this as Blue Socket's remoteHostname may cover this?
     private static func reverseDNS(ip: String) -> String {
-        return ""
+        var results: UnsafeMutablePointer<addrinfo>? = nil
+        defer {
+            if let results = results {
+                freeaddrinfo(results)
+            }
+        }
+        let error = getaddrinfo(ip, nil, nil, &results)
+        if (error != 0) {
+            log.debugMessage("Unable to reverse ip: \(ip)")
+            return ip
+        }
 
-//        var results: UnsafeMutablePointer<addrinfo>? = nil
-//        defer {
-//            if let results = results {
-//                freeaddrinfo(results)
-//            }
-//        }
-//        let error = getaddrinfo(ip, nil, nil, &results)
-//        if (error != 0) {
-//            log.debugMessage("Unable to reverse ip: \(ip)")
-//            return ip
-//        }
-//
-//        for addrinfo in sequence(first: results, next: { $0?.pointee.ai_next }) {
-//            guard let pointee = addrinfo?.pointee else {
-//                log.debugMessage("Unable to reverse ip: \(ip)")
-//                return ip
-//            }
-//
-//            let hname = UnsafeMutablePointer<Int8>.allocate(capacity: Int(NI_MAXHOST))
-//            defer {
-//                hname.deallocate()
-//            }
-//            let error = getnameinfo(pointee.ai_addr, pointee.ai_addrlen, hname, socklen_t(NI_MAXHOST), nil, 0, 0)
-//            if (error != 0) {
-//                continue
-//            }
-//            return String(cString: hname)
-//        }
-//
-//        return ip
+        for addrinfo in sequence(first: results, next: { $0?.pointee.ai_next }) {
+            guard let pointee = addrinfo?.pointee else {
+                log.debugMessage("Unable to reverse ip: \(ip)")
+                return ip
+            }
+
+            let hname = UnsafeMutablePointer<Int8>.allocate(capacity: Int(NI_MAXHOST))
+            defer {
+                hname.deallocate()
+            }
+            let error = getnameinfo(pointee.ai_addr, pointee.ai_addrlen, hname, socklen_t(NI_MAXHOST), nil, 0, 0)
+            if (error != 0) {
+                continue
+            }
+            return String(cString: hname)
+        }
+
+        return ip
     }
 }
