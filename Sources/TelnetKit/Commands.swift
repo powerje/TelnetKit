@@ -6,16 +6,13 @@
 
 
 import Foundation
-import TCP
 
-
-// WTF these are in the TCP framework:
 public typealias Byte = UInt8
 public typealias Bytes = [Byte]
-public typealias ByteBuffer = UnsafeBufferPointer<Byte>
-public typealias MutableByteBuffer = UnsafeMutableBufferPointer<Byte>
-public typealias BytesPointer = UnsafePointer<Byte>
-public typealias MutableBytesPointer = UnsafeMutablePointer<Byte>
+//public typealias ByteBuffer = UnsafeBufferPointer<Byte>
+//public typealias MutableByteBuffer = UnsafeMutableBufferPointer<Byte>
+//public typealias BytesPointer = UnsafePointer<Byte>
+//public typealias MutableBytesPointer = UnsafeMutablePointer<Byte>
 
 // Copied most of these from:
 // https://github.com/TooTallNate/node-telnet/blob/master/lib/telnet.js
