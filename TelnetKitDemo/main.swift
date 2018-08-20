@@ -10,13 +10,13 @@ import TelnetKit
 
 func main() {
     print("Starting server...")
-    let server = Server() {
+    let server = TelnetServer() {
         beginEcho(client: $0)
     }
     server.serve()
 }
 
-private func beginEcho(client: Client) {
+private func beginEcho(client: TelnetClient) {
     while client.connected {
         if let input = client.read() {
             if input.trimmingCharacters(in: .whitespacesAndNewlines) == "quit" {

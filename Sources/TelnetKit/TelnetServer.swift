@@ -4,9 +4,9 @@ import Socket
 import Willow
 
 let log = Logger(logLevels: [.all], writers: [ConsoleWriter()])
-public typealias HandleClient = (_ client: Client) -> Void
+public typealias HandleClient = (_ client: TelnetClient) -> Void
 
-public class Server {
+public class TelnetServer {
 
     let port: Int
     private let handleClient: HandleClient
@@ -62,7 +62,7 @@ public class Server {
     }
 }
 
-public protocol Client {
+public protocol TelnetClient {
     func read() -> String?
     @discardableResult func write(string: String) -> Bool
     var connected: Bool { get }
@@ -71,7 +71,7 @@ public protocol Client {
     func ip() -> String
 }
 
-class Connection: Client {
+class Connection: TelnetClient {
     fileprivate let client: Socket
     public var connected = true
 
