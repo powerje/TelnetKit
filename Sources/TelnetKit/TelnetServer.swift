@@ -13,7 +13,6 @@ public class TelnetServer {
     private var listenSocket: Socket?
     private let socketLockQueue = DispatchQueue(label: "com.telnetkit.Server.SocketLockQueue")
 
-//    private var serverSocket: TCPSocket?
 
     public init(port: Int = 9000, handleClient: @escaping HandleClient) {
         self.port = port
@@ -31,9 +30,9 @@ public class TelnetServer {
             try server.listen(on: self.port)
             while let client = try? server.acceptClientConnection() {
                 DispatchQueue.global(qos: .background).async {
-                    let connection = Connection(client)
+                    let connection = TelnetClient(client)
                     log.debugMessage("Client connected: \(connection.domain())")
-                    self.handshake(connection: connection)
+                    self.handshake(client: connection)
                     self.handleClient(connection)
                     connection.disconnect()
                 }
@@ -50,7 +49,7 @@ public class TelnetServer {
         listenSocket.close()
     }
 
-    private func handshake(connection: Connection) {
+    private func handshake(client: TelnetClient) {
 //        let client = connection.client
 //        let iac: Byte = 255
 //        let will: Byte = 253
@@ -62,16 +61,7 @@ public class TelnetServer {
     }
 }
 
-public protocol TelnetClient {
-    func read() -> String?
-    @discardableResult func write(string: String) -> Bool
-    var connected: Bool { get }
-    func disconnect()
-    func domain() -> String
-    func ip() -> String
-}
-
-class Connection: TelnetClient {
+public class TelnetClient {
     fileprivate let client: Socket
     public var connected = true
 
@@ -79,7 +69,7 @@ class Connection: TelnetClient {
         self.client = client
     }
 
-    func read() -> String? {
+    public func read() -> String? {
         guard let message = try? client.readString() else {
             log.debugMessage("Client is disconnected, report up somehow?")
             disconnect()
@@ -89,24 +79,24 @@ class Connection: TelnetClient {
         return message
     }
 
-    @discardableResult func write(string: String) -> Bool {
+    @discardableResult public func write(string: String) -> Bool {
         let result = try? client.write(from: string)
         return result != nil
     }
 
-    func disconnect() {
+    public func disconnect() {
         // TODO: Report up that client has closed?
         client.close()
         connected = false
     }
 
-    func domain() -> String {
+    public func domain() -> String {
         return client.remoteHostname
 //        guard let ip = client.remoteAddress else { return "not connected" }
 //        return Connection.reverseDNS(ip: ip)
     }
 
-    func ip() -> String {
+    public func ip() -> String {
         return client.remotePath ?? "not connected"
     }
 
