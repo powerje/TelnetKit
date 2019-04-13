@@ -13,7 +13,6 @@ public class TelnetServer {
     private var listenSocket: Socket?
     private let socketLockQueue = DispatchQueue(label: "com.telnetkit.Server.SocketLockQueue")
 
-
     public init(port: Int = 9000, handleClient: @escaping HandleClient) {
         self.port = port
         self.handleClient = handleClient
@@ -24,7 +23,7 @@ public class TelnetServer {
         do {
             try self.listenSocket = Socket.create(family: .inet6)
             guard let server = self.listenSocket else {
-                print("Unable to unwrap socket...")
+                log.errorMessage("Unable to unwrap socket...")
                 return
             }
             try server.listen(on: self.port)
@@ -39,7 +38,7 @@ public class TelnetServer {
             }
 
         } catch {
-            print("Error: \(error)")
+            log.errorMessage("Error: \(error)")
         }
 
     }
@@ -50,14 +49,10 @@ public class TelnetServer {
     }
 
     private func handshake(client: TelnetClient) {
-//        let client = connection.client
-//        let iac: Byte = 255
-//        let will: Byte = 253
-//        let tt: Byte = 24
-//        let bytes = Bytes(arrayLiteral: iac, will, tt)
-//        _ = try? client.socket.write(Data(bytes: bytes)) // [Byte] needs to be Data now
-//        let response = try? [UInt8](client.socket.read(max: Server.readMax))
-//        print("response: \(response?.telnetCommandList() ?? "no response")")
+//        let bytes = Bytes(arrayLiteral: Commands.iac.rawValue, Commands.iac.rawValue, Commands.will.rawValue, Byte(24))
+//        client.write(bytes: bytes)
+//        let response = client.readBytes()
+//        print("response: \(String(describing: response))")
     }
 }
 
@@ -69,7 +64,7 @@ public class TelnetClient {
         self.client = client
     }
 
-    public func read() -> String? {
+    public func readString() -> String? {
         guard let message = try? client.readString() else {
             log.debugMessage("Client is disconnected, report up somehow?")
             disconnect()
@@ -79,8 +74,24 @@ public class TelnetClient {
         return message
     }
 
+    public func readBytes() -> Bytes? {
+        var data = Data()
+        guard let _ = try? client.read(into: &data) else {
+            log.debugMessage("Client is disconnected, report up somehow?")
+            disconnect()
+            return nil
+        }
+        let byteArray: [UInt8] = data.map { $0 }
+        return byteArray
+    }
+    
     @discardableResult public func write(string: String) -> Bool {
         let result = try? client.write(from: string)
+        return result != nil
+    }
+    
+    @discardableResult public func write(bytes: Bytes) -> Bool {
+        let result = try? client.write(from: Data(bytes: bytes))
         return result != nil
     }
 

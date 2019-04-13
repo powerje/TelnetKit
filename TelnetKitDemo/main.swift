@@ -18,7 +18,8 @@ func main() {
 
 private func beginEcho(client: TelnetClient) {
     while client.connected {
-        if let input = client.read() {
+        if let input = client.readString() {
+            print(input)
             if input.trimmingCharacters(in: .whitespacesAndNewlines) == "quit" {
                 client.write(string: "buh bye!\n")
                 client.disconnect()
