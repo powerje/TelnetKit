@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/IBM-Swift/BlueSocket.git",
         "state": {
           "branch": null,
-          "revision": "15ff39f95e0b56058cf050c910c1e26002d01f71",
-          "version": "1.0.15"
+          "revision": "ccc671b022bc60e5fffcb2aa15f499c6331bfd18",
+          "version": "1.0.46"
         }
       },
       {
@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/Nike-Inc/Willow.git",
         "state": {
           "branch": null,
-          "revision": "bee75d06f0e94a7053a790f0327220d53f075758",
-          "version": "5.0.2"
+          "revision": "d1304b6374cace1e4008b5f5faec7ce973f54ede",
+          "version": "5.1.0"
         }
       }
     ]
