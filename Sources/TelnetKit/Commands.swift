@@ -101,6 +101,16 @@ enum Options: Byte {
     case exopl = 255            // http://tools.ietf.org/html/rfc861
 }
 
+struct Sub {
+    static let `is` = Byte(0)
+    static let send = Byte(1)
+    static let info = Byte(2)
+    static let variable = Byte(0)
+    static let value = Byte(1)
+    static let esc = Byte(2)
+    static let userVariable = Byte(3)
+}
+
 // TODO: implement this harder.
 // Uh, not really sure is this stuff is valid or useful at this point - I just wanted to:
 // a) determine whether or not a client response ought to be interpreted as user input vs
