@@ -21,7 +21,7 @@ public class TelnetServer {
     public func serve() {
         print("Listening on port \(port)")
         do {
-            try self.listenSocket = Socket.create(family: .inet6)
+            try self.listenSocket = Socket.create(family: .inet)
             guard let server = self.listenSocket else {
                 log.errorMessage("Unable to unwrap socket...")
                 return
