@@ -49,6 +49,10 @@ public class TelnetServer {
     }
 
     private func handshake(client: TelnetClient) {
+//        let bytes = [Command.iac.rawValue, Command.will.rawValue, Option.echo.rawValue]
+//        print("bytes: \(bytes.telnetCommandList)")
+//        client.write(bytes: bytes)
+
 //        let bytes = Bytes(arrayLiteral: Commands.iac.rawValue, Commands.iac.rawValue, Commands.will.rawValue, Byte(24))
 //        client.write(bytes: bytes)
 //        let response = client.readBytes()
@@ -57,6 +61,7 @@ public class TelnetServer {
 }
 
 public class TelnetClient {
+
     fileprivate let client: Socket
     public var connected = true
 
@@ -84,13 +89,15 @@ public class TelnetClient {
         let byteArray: [UInt8] = data.map { $0 }
         return byteArray
     }
-    
+
     @discardableResult public func write(string: String) -> Bool {
         let result = try? client.write(from: string)
         return result != nil
     }
-    
+
     @discardableResult public func write(bytes: Bytes) -> Bool {
+        let d = Data(bytes: bytes)
+        print("data: \(d.base64EncodedString())")
         let result = try? client.write(from: Data(bytes: bytes))
         return result != nil
     }
@@ -144,4 +151,5 @@ public class TelnetClient {
 
         return ip
     }
+
 }

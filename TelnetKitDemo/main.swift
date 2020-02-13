@@ -17,6 +17,15 @@ func main() {
 }
 
 private func beginEcho(client: TelnetClient) {
+    let bytes = [Command.iac.rawValue, Command.will.rawValue, Option.echo.rawValue]
+    print("bytes: \(bytes.telnetCommandList)")
+    client.write(bytes: bytes)
+
+    let response = client.readBytes()
+    if let response = response {
+        print("Response: \(response)")
+    }
+
     while client.connected {
         if let input = client.readString() {
             print(input)

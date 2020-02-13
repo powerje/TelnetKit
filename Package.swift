@@ -1,9 +1,12 @@
-// swift-tools-version:4.2
+// swift-tools-version:5.1
 
 import PackageDescription
 
 let package = Package(
     name: "TelnetKit",
+    platforms: [
+        .macOS(.v10_15),
+    ],
     products: [
         .library(name: "TelnetKit", targets: ["TelnetKit"]),
     ],
