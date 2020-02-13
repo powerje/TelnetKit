@@ -1,10 +1,3 @@
-//
-//  main.swift
-//  TelnetKitDemo
-//
-//  Created by James Power on 12/22/17.
-//
-
 import Foundation
 import TelnetKit
 

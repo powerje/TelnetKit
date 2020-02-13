@@ -1,14 +1,15 @@
 import Dispatch
 import Foundation
 import Socket
-import Willow
 
-let log = Logger(logLevels: [.all], writers: [ConsoleWriter()])
 public typealias HandleClient = (_ client: TelnetClient) -> Void
+
+private let log = Log()
 
 public class TelnetServer {
 
     let port: Int
+
     private let handleClient: HandleClient
     private var listenSocket: Socket?
     private let socketLockQueue = DispatchQueue(label: "com.telnetkit.Server.SocketLockQueue")

@@ -12,12 +12,11 @@ let package = Package(
     ],
     dependencies: [
 	.package(url: "https://github.com/IBM-Swift/BlueSocket.git", from: "1.0.0"),
-	.package(url: "https://github.com/Nike-Inc/Willow.git", from: "5.0.2"),
     ],
     targets: [
         .target(
             name: "TelnetKit",
-            dependencies: ["Socket", "Willow"]),
+            dependencies: ["Socket"]),
         .target(
             name: "TelnetKitDemo",
             dependencies: ["TelnetKit"],
