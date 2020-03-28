@@ -97,9 +97,7 @@ public class TelnetClient {
     }
 
     @discardableResult public func write(bytes: Bytes) -> Bool {
-        let d = Data(bytes: bytes)
-        print("data: \(d.base64EncodedString())")
-        let result = try? client.write(from: Data(bytes: bytes))
+        let result = try? client.write(from: Data(bytes))
         return result != nil
     }
 

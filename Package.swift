@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:5.2
 
 import PackageDescription
 
@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "TelnetKit", targets: ["TelnetKit"]),
     ],
     dependencies: [
-	.package(url: "https://github.com/IBM-Swift/BlueSocket.git", from: "1.0.0"),
+	.package(name: "Socket", url: "https://github.com/IBM-Swift/BlueSocket.git", from: "1.0.0"),
     ],
     targets: [
         .target(
